@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KofiType Forger v2.1</title>
+  <title>KofiType Encrypted Forger v3.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
@@ -136,21 +136,6 @@
         transform: none;
     }
 
-    textarea{
-      width:100%;
-      min-height:260px;
-      margin-top:25px;
-      border:none;
-      outline:none;
-      border-radius:20px;
-      padding:20px;
-      background:#121218;
-      color:#66ffb3;
-      font-family:'Fira Code',monospace;
-      resize:vertical;
-      line-height:1.5;
-    }
-
     .footer{
       margin-top:30px;
       text-align:center;
@@ -248,6 +233,18 @@
         min-height: 24px;
     }
 
+    .encryption-notice {
+        margin-top: 25px;
+        padding: 15px;
+        border-radius: 12px;
+        background: rgba(255, 100, 100, 0.05);
+        border: 1px dashed rgba(255, 100, 100, 0.2);
+        color: #ff9999;
+        font-size: 0.9rem;
+        text-align: center;
+        display: none;
+    }
+
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
@@ -274,23 +271,23 @@
   <div class="modal-overlay" id="loadingModal">
       <div class="modal-content">
           <div class="spinner"></div>
-          <h2 style="color: white; margin-bottom: 10px;">Forging Payload...</h2>
+          <h2 style="color: white; margin-bottom: 10px;">Forging V3 Payload...</h2>
           <div class="progress-bar-container">
               <div class="progress-bar" id="progressBar"></div>
           </div>
-          <div class="hacking-text" id="hackingText">Initializing...</div>
+          <div class="hacking-text" id="hackingText">Initializing AES-GCM Key...</div>
       </div>
   </div>
 
   <div class="container">
-    <h1>☕ KofiType Signed Export Generator <span style="font-size:1rem; color:#66ffb3;">v2.1</span></h1>
+    <h1>☕ KofiType Signed Export Generator <span style="font-size:1rem; color:#66ffb3;">v3.0</span></h1>
 
     <p class="subtitle">
-      Generate valid <code>.kofi</code> export files with custom stats and mathematically perfect signatures for KofiType V2.
+      Generate fully encrypted and zero-width encoded <code>.kofi</code> files that bypass Guardian v4 Secure on KofiType V3.
     </p>
 
-    <!-- Hidden Security Token Input -->
-    <input type="hidden" id="securityToken" value="2209760271">
+    <!-- Hidden Security Token Input (Extracted from f46411fd) -->
+    <input type="hidden" id="securityToken" value="4100198909">
 
     <div class="grid">
       <div class="card">
@@ -341,12 +338,13 @@
     </div>
 
     <div class="actions">
-      <button class="primary" id="generateBtn" onclick="startGeneration()">⚡ Forge .kofi File</button>
-      <button class="secondary" id="downloadBtn" onclick="downloadGeneratedFile()" style="display: none;">⬇️ Download Generated File</button>
-      <button class="secondary" id="copyBtn" onclick="copyJson()" style="display: none;">📋 Copy JSON</button>
+      <button class="primary" id="generateBtn" onclick="startGeneration()" style="width: 100%;">⚡ Encrypt & Download .kofi File</button>
     </div>
 
-    <textarea id="output" readonly placeholder="Your forged payload will appear here..."></textarea>
+    <div class="encryption-notice" id="encryptionNotice">
+        <i class="fa-solid fa-lock" style="margin-right: 5px;"></i>
+        File encoded securely with AES-GCM and zero-width steganography. It will appear empty in notepad.
+    </div>
 
     <div class="footer">
       <div class="badge">
@@ -363,38 +361,53 @@
   </div>
 
   <script>
-    const _HMAC_SALT = "kofitype_guardian_v4_secure_v2_0";
-
     const hackingPhases = [
-        "Consulting with the aliens...",
-        "Bypassing Guardian Bootloader...",
+        "Generating AES-GCM Master Key...",
+        "Encrypting Payload...",
+        "Bypassing Guardian v4 Secure...",
+        "Injecting Checksums...",
+        "Applying Zero-Width Steganography...",
+        "Encoding binary sequence...",
         "Hacking NASA database...",
-        "Downloading more RAM...",
-        "Applying quantum physics to the signature...",
-        "XOR-ing the mainframe...",
-        "Injecting dark matter into the payload...",
+        "Consulting with the aliens...",
         "Bribing the server administrators...",
-        "Reticulating splines...",
-        "Extracting the secure salts...",
-        "Calculating mathematical perfection..."
+        "Obfuscating payload bits..."
     ];
-
-    async function _newSha256(str, token) {
-      const tokenStr = token.toString(16);
-      const shift = (token % 254) + 1;
-      let scrambled = "";
-      for (let i = 0; i < str.length; i++) {
-          scrambled += String.fromCharCode(str.charCodeAt(i) ^ shift);
-      }
-      scrambled = str.length + "|" + scrambled;
-      const msgBuffer = new TextEncoder().encode(scrambled + _HMAC_SALT + tokenStr);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
 
     let latestGeneratedBlob = null;
     let latestGeneratedUsername = 'Guest';
+
+    // --- V3 SECURITY LOGIC ---
+
+    async function _klyuch(securityToken) {
+        const tokenStr = securityToken.toString(16).padEnd(32, '0').substring(0, 32);
+        return await crypto.subtle.importKey('raw', new TextEncoder().encode(tokenStr), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    }
+
+    function _nev(u) {
+        let b = "";
+        for (let i = 0; i < u.length; i++) {
+            b += u[i].toString(2).padStart(8, '0');
+        }
+        return b.replace(/0/g, '\u200B').replace(/1/g, '\u200C');
+    }
+
+    async function signPayload(cleanUser, securityToken) {
+        cleanUser._n = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+        cleanUser._c = (cleanUser.xp * cleanUser.level * cleanUser.testsCompleted) ^ securityToken;
+
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await _klyuch(securityToken);
+        const encodedData = new TextEncoder().encode(JSON.stringify(cleanUser));
+        const encryptedData = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, encodedData);
+
+        const ivBase64 = btoa(String.fromCharCode(...iv));
+        const dataBase64 = btoa(String.fromCharCode(...new Uint8Array(encryptedData)));
+
+        return { e: 1, i: ivBase64, d: dataBase64 };
+    }
+
+    // --------------------------
 
     function clamp(val, min, max) {
         return Math.max(min, Math.min(max, val || min));
@@ -417,16 +430,13 @@
         generateBtn.disabled = true;
         modal.classList.add('active');
         progress.style.width = '0%';
-        document.getElementById('output').value = '';
-        document.getElementById('downloadBtn').style.display = 'none';
-        document.getElementById('copyBtn').style.display = 'none';
+        document.getElementById('encryptionNotice').style.display = 'none';
 
-        // Select 4 random phrases
         const selectedPhases = shuffleArray([...hackingPhases]).slice(0, 4);
-        selectedPhases.push("Payload generated successfully.");
+        selectedPhases.push("Payload securely sealed.");
 
-        const totalTime = 4000; // 4 seconds total
-        const updateInterval = 50; // update progress every 50ms
+        const totalTime = 4000;
+        const updateInterval = 50; 
         const phaseTime = totalTime / selectedPhases.length;
         
         let elapsed = 0;
@@ -435,11 +445,9 @@
         const intervalId = setInterval(async () => {
             elapsed += updateInterval;
             
-            // Update progress bar
             const percent = Math.min((elapsed / totalTime) * 100, 100);
             progress.style.width = percent + '%';
 
-            // Update text based on elapsed time
             const expectedPhaseIndex = Math.min(Math.floor(elapsed / phaseTime), selectedPhases.length - 1);
             if (expectedPhaseIndex !== currentPhaseIndex) {
                 currentPhaseIndex = expectedPhaseIndex;
@@ -452,8 +460,8 @@
                 modal.classList.remove('active');
                 generateBtn.disabled = false;
                 
-                document.getElementById('downloadBtn').style.display = 'block';
-                document.getElementById('copyBtn').style.display = 'block';
+                document.getElementById('encryptionNotice').style.display = 'block';
+                downloadGeneratedFile(); // Automatically download the file!
             }
         }, updateInterval);
     }
@@ -485,6 +493,21 @@
          testsCompleted = 1;
          document.getElementById('tests').value = testsCompleted;
       }
+      // --- History Array Generator ---
+      let historyLength = testsCompleted >= 20 ? 20 : testsCompleted;
+      let historyArr = [];
+      for (let i = 0; i < historyLength; i++) {
+        // slightly randomize past tests for realism
+        historyArr.push({
+          date: new Date().toLocaleDateString(),
+          wpm: Math.max(0, bestWpm - Math.floor(Math.random() * 20)),
+          acc: clamp(acc - Math.floor(Math.random() * 5), 0, 100),
+          mode
+        });
+      }
+      if (historyArr.length > 0) {
+        historyArr[0].wpm = bestWpm; // Ensure the most recent test matches the bestWpm if it's new
+      }
       // -------------------------------
 
       const cleanUser = {
@@ -494,27 +517,18 @@
         bestWpm,
         testsCompleted,
         timeTyped,
-        history:[
-          {
-            date:new Date().toLocaleDateString(),
-            wpm:bestWpm,
-            acc,
-            mode
-          }
-        ],
+        history: historyArr,
         currentSeason:new Date().toISOString().slice(0,7)
       };
 
-      // Add v2 specific validation fields
-      cleanUser._n = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-      cleanUser._c = (xp * level * testsCompleted) ^ SECURITY_TOKEN;
-      cleanUser.sig = await _newSha256(JSON.stringify(cleanUser), SECURITY_TOKEN);
+      // V3 Sign and Encrypt
+      const signedUserObj = await signPayload(cleanUser, SECURITY_TOKEN);
 
       const finalExport = {
         app:'kofitype',
-        version:'2.0',
+        version:'2.0', // KofiType still expects 2.0 in the JSON payload
         timestamp:new Date().toISOString(),
-        user:cleanUser,
+        user:signedUserObj,
         settings:{
           darkMode:true,
           sound:true,
@@ -531,10 +545,11 @@
         }
       };
 
-      const json = JSON.stringify(finalExport,null,2);
-      document.getElementById('output').value = json;
+      // Convert to binary zero-width space characters!
+      const enc = new TextEncoder().encode(JSON.stringify(finalExport));
+      const invisibleData = _nev(enc);
       
-      latestGeneratedBlob = new Blob([json], { type: 'application/json' });
+      latestGeneratedBlob = new Blob([invisibleData], { type: 'application/octet-stream' });
       latestGeneratedUsername = cleanUser.username;
     }
 
@@ -548,22 +563,6 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    }
-    
-    async function copyJson(){
-      const val = document.getElementById('output').value;
-      if(!val){
-        alert('Generate file first 😄');
-        return;
-      }
-      await navigator.clipboard.writeText(val);
-      
-      const copyBtn = document.getElementById('copyBtn');
-      const originalText = copyBtn.innerHTML;
-      copyBtn.innerHTML = '✅ Copied!';
-      setTimeout(() => {
-          copyBtn.innerHTML = originalText;
-      }, 2000);
     }
   </script>
 </body>
