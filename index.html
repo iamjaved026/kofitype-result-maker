@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KofiType Encrypted Forger v4.0</title>
+  <title>KofiType Encrypted Forger v5.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *{
       margin:0;
@@ -180,6 +181,9 @@
 
     .actions{
       margin-top:28px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
     }
 
     button{
@@ -194,14 +198,26 @@
       font-family:'Outfit',sans-serif;
       position: relative;
       overflow: hidden;
+      flex: 1;
     }
 
     .primary{
       background: linear-gradient(135deg, #d9a066, #c4884a);
       color:#111;
-      width: 100%;
       font-size: 1.05rem;
       letter-spacing: 0.3px;
+    }
+
+    .secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 1.05rem;
+    }
+
+    .secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
     .primary:hover{
@@ -225,6 +241,7 @@
       text-align:center;
       color:#777;
       line-height:1.8;
+      width: 100%;
     }
 
     .footer a{
@@ -314,6 +331,12 @@
         0 25px 50px rgba(0,0,0,0.5);
     }
 
+    .modal-content.card-modal {
+      max-width: 700px;
+      padding: 30px;
+      background: rgba(18, 18, 26, 0.95);
+    }
+
     .spinner {
       width: 56px;
       height: 56px;
@@ -367,6 +390,7 @@
       text-align: center;
       display: none;
       line-height: 1.6;
+      width: 100%;
     }
 
     @keyframes spin {
@@ -387,6 +411,95 @@
       animation: none;
     }
 
+    /* Export Card CSS Matching V5 Source exactly */
+    .export-card-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 25px;
+        background: transparent;
+    }
+
+    .export-card {
+        width: 100%;
+        max-width: 600px;
+        background: linear-gradient(135deg, #3E2723, #1A1210);
+        color: #FFF8F0;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        border: 2px solid #D9A066;
+        transition: all 0.3s ease;
+    }
+
+    .export-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(217, 160, 102, 0.1) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .export-username {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #D9A066;
+        margin-bottom: 5px;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .export-rank {
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .export-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 2rem;
+    }
+
+    .export-stat {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .export-stat-val {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #FFF8F0;
+        font-family: 'Fira Code', monospace;
+    }
+
+    .export-stat-label {
+        font-size: 0.8rem;
+        color: #A68A72;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .export-watermark {
+        font-size: 1rem;
+        color: rgba(217, 160, 102, 0.5);
+        font-weight: 600;
+        letter-spacing: 2px;
+        margin-top: 1rem;
+    }
+
+    .export-watermark i {
+        margin-right: 5px;
+    }
+
     @media(max-width:700px){
       .container{
         padding:22px;
@@ -401,6 +514,8 @@
       .modal-content {
         padding: 30px 25px;
       }
+      .export-username { font-size: 2.2rem; }
+      .export-stat-val { font-size: 1.8rem; }
     }
   </style>
 </head>
@@ -410,7 +525,7 @@
   <div class="modal-overlay" id="loadingModal">
     <div class="modal-content">
       <div class="spinner"></div>
-      <h2>Forging V4 Payload...</h2>
+      <h2>Forging V5 Payload...</h2>
       <div class="progress-bar-container">
         <div class="progress-bar" id="progressBar"></div>
       </div>
@@ -418,15 +533,53 @@
     </div>
   </div>
 
+  <!-- Card Modal -->
+  <div class="modal-overlay" id="cardModal">
+    <div class="modal-content card-modal">
+      <h2 style="margin-bottom: 20px; color: var(--accent);">Profile Card Preview</h2>
+      
+      <div class="export-card-wrapper">
+        <div id="export-card" class="export-card">
+          <div class="export-username" id="card-username">Guest</div>
+          <div class="export-rank" id="card-rank-text" style="color: #CD7F32;"><i id="card-rank-icon" class="fa-solid fa-medal"></i> <span id="card-rank">Bronze I</span></div>
+          <div class="export-grid">
+              <div class="export-stat">
+                  <div class="export-stat-val" id="card-wpm">0</div>
+                  <div class="export-stat-label">Best WPM</div>
+              </div>
+              <div class="export-stat">
+                  <div class="export-stat-val" id="card-acc">0%</div>
+                  <div class="export-stat-label">Avg Accuracy</div>
+              </div>
+              <div class="export-stat">
+                  <div class="export-stat-val" id="card-tests">0</div>
+                  <div class="export-stat-label">Tests Done</div>
+              </div>
+              <div class="export-stat">
+                  <div class="export-stat-val" id="card-time">0h 0m</div>
+                  <div class="export-stat-label">Time Typed</div>
+              </div>
+          </div>
+          <div class="export-watermark"><i class="fa-solid fa-mug-hot"></i> kofitype</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 15px; margin-top: 20px;">
+        <button class="secondary" onclick="closeCardModal()">Close</button>
+        <button class="primary" onclick="downloadProfileCard()"><i class="fa-solid fa-camera"></i> Save Card Image</button>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="header">
       <div>
-        <h1>☕ KofiType Export Forger <span class="version-tag">v4.0</span></h1>
+        <h1>☕ KofiType Export Forger <span class="version-tag">v5.0</span></h1>
       </div>
     </div>
 
     <p class="subtitle">
-      Generate fully encrypted and zero-width encoded <code>.kofi</code> files that bypass Guardian v5 Secure on KofiType V4.
+      Generate fully encrypted and zero-width encoded <code>.kofi</code> files that bypass Guardian v5 Secure on KofiType V5.
       Files are sealed with AES-256-GCM and steganographic encoding — invisible to text editors.
     </p>
 
@@ -437,8 +590,8 @@
       <span class="tech-chip warn"><i class="fa-solid fa-fingerprint"></i> SHA-256 Token</span>
     </div>
 
-    <!-- Hidden Security Token (V4: derived from 9a5bd87d hash) -->
-    <input type="hidden" id="securityToken" value="2589710461">
+    <!-- Hidden Security Token (V5: derived from eeab... hash) -->
+    <input type="hidden" id="securityToken" value="4004198119">
 
     <div class="grid">
       <div class="card">
@@ -491,13 +644,16 @@
 
     <div class="actions">
       <button class="primary" id="generateBtn" onclick="startGeneration()">
-        <i class="fa-solid fa-bolt"></i> &nbsp;Encrypt & Download .kofi File
+        <i class="fa-solid fa-bolt"></i> &nbsp;Encrypt .kofi
+      </button>
+      <button class="secondary" id="cardBtn" onclick="openCardModal()">
+        <i class="fa-solid fa-camera"></i> &nbsp;Profile Card
       </button>
     </div>
 
     <div class="encryption-notice" id="encryptionNotice">
       <i class="fa-solid fa-shield-check" style="margin-right: 5px;"></i>
-      Payload forged with V4 token <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:0.8rem;">2589710461</code>.
+      Payload forged with V5 token <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:0.8rem;">4004198119</code>.
       File encoded with AES-GCM + zero-width steganography — appears empty in Notepad.
     </div>
 
@@ -535,9 +691,9 @@
     let latestGeneratedUsername = 'Guest';
 
     // ==========================================
-    //  V4 SECURITY LOGIC
-    //  Token: 2589710461
-    //  Hash:  9a5bd87d83705c2832c69587753939f3ec158fab5d436a0ec305b1e341b8658c
+    //  V5 SECURITY LOGIC
+    //  Token: 4004198119
+    //  Hash:  eeab36e7b48315e99ee200cef9170ef142dc9a4b5d1888470b73eb5a32ce0a98
     // ==========================================
 
     async function _klyuch(securityToken) {
@@ -736,6 +892,79 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
+
+    // ==========================================
+    //  PROFILE CARD GENERATION LOGIC
+    // ==========================================
+    const RANKS = [
+        { name: "Bronze", color: "#CD7F32", icon: "fa-medal" }, 
+        { name: "Silver", color: "#C0C0C0", icon: "fa-award" }, 
+        { name: "Gold", color: "#FFD700", icon: "fa-trophy" }, 
+        { name: "Diamond", color: "#00FFFF", icon: "fa-gem" }, 
+        { name: "Heroic", color: "#FF00FF", icon: "fa-star" }, 
+        { name: "Master", color: "#FF4500", icon: "fa-crown" }, 
+        { name: "Grandmaster", color: "#8A2BE2", icon: "fa-dragon" }, 
+        { name: "Godlike", color: "#FF0000", icon: "fa-bolt" }
+    ];
+
+    function toRoman(num) { 
+        const roman = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 }; 
+        let str = ''; 
+        for (let i of Object.keys(roman)) { 
+            let q = Math.floor(num / roman[i]); 
+            num -= q * roman[i]; 
+            str += i.repeat(q); 
+        } 
+        return str; 
+    }
+
+    function getRankInfo(level) { 
+        const r = RANKS[Math.min(RANKS.length - 1, Math.floor((level - 1) / 4))]; 
+        return { ...r, full: `${r.name} ${toRoman(level % 4 || 4)}` }; 
+    }
+
+    function openCardModal() {
+        // Populate the card dynamically from form inputs
+        const username = document.getElementById('username').value || 'Guest';
+        const level = clamp(parseInt(document.getElementById('level').value), 1, 9999);
+        const bestWpm = document.getElementById('bestWpm').value || 0;
+        const acc = document.getElementById('acc').value || 0;
+        const tests = document.getElementById('tests').value || 0;
+        const timeTyped = document.getElementById('timeTyped').value || 0;
+
+        const rank = getRankInfo(level);
+
+        document.getElementById('card-username').innerText = username.slice(0, 20);
+        document.getElementById('card-rank').innerText = rank.full;
+        document.getElementById('card-rank-text').style.color = rank.color;
+        
+        const cri = document.getElementById('card-rank-icon');
+        if (cri) cri.className = 'fa-solid ' + rank.icon;
+
+        document.getElementById('card-wpm').innerText = bestWpm;
+        document.getElementById('card-acc').innerText = acc + '%';
+        document.getElementById('card-tests').innerText = tests;
+        document.getElementById('card-time').innerText = Math.floor(timeTyped / 3600) + 'h ' + Math.floor((timeTyped % 3600) / 60) + 'm';
+
+        document.getElementById('cardModal').classList.add('active');
+    }
+
+    function closeCardModal() {
+        document.getElementById('cardModal').classList.remove('active');
+    }
+
+    function downloadProfileCard() {
+        html2canvas(document.getElementById('export-card'), {
+            backgroundColor: null, // Keep transparency if needed
+            scale: 2, // High resolution
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'stats.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+
   </script>
 </body>
 </html>
